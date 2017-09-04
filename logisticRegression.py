@@ -13,11 +13,22 @@ from numpy.linalg import inv
 import matplotlib.pyplot as plt
 
 # Parameters
-eps = 1e-6 # Threshold
+eps = 1e-6 # Threshold for Newtons method
+crossVal = 5 # How many folds of cross validation. I.e. dataset is partitioned
+# into crossVal parts.
 
-# Loads data from the files
+division = (crossVal-1)/float(crossVal)
+
+# Load points from data
 xVec = np.loadtxt("logistic_x.txt") # Points in the (x,y)-plane
 yVec = np.loadtxt("logistic_y.txt") # Labels (-1 or 1) of the above points
+
+# Indices for the training and test set
+indexVec = np.linspace(0, np.size(xVec,0),num=np.size(xVec,0)+1, dtype=int)
+np.random.shuffle(indexVec)
+divisionIdx = int(division*np.size(xVec,0))
+trainIdx = indexVec[0:divisionIdx]
+testIdx = indexVec[divisionIdx+1:np.size(indexVec,0)]
 
 # Partition data
 posVec = xVec[yVec == 1] # Positive examples
@@ -78,6 +89,13 @@ while np.abs(np.linalg.norm(theta-theta_old)) > eps:
     theta = theta_old - np.dot(hessInv,grad)
     lossVec = np.append(lossVec, lossFun(xVec, yVec, theta))
     
+# Computes the accuracy of the classifier
+dotprods = np.dot(xVec[:,1:2], theta[1:2])
+dotprodsigns = dotprods + theta[0]
+prodsigns = dotprodsigns*yVec # Positive => correct, negative => incorrect
+numCorrect = len(prodsigns[prodsigns > 0])
+correctPercentage = float(numCorrect) / len(prodsigns)*100
+
 # Plots loss function
 plt.figure(1)
 plt.plot(lossVec)
